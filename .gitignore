@@ -1,0 +1,16 @@
+# Downloaded ECB and US data, ~75 MB. Rebuilt on first run.
+data/cache/
+
+# Generated CSV output, ~72 MB of error surfaces. Rebuilt by the scripts.
+/output/*
+# The figures are small and the README links to them, so they ship.
+!/output/figures/
+/output/figures/*
+!/output/figures/*.png
+
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.venv/
+.idea/

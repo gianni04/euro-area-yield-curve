@@ -1,0 +1,164 @@
+"""Fit a Svensson curve to observed yields (multi-start optimisation).
+
+Used on US data, where the Fed publishes its own parameters to compare against.
+
+Note: the model is not symmetric in (beta2, tau1) <-> (beta3, tau2) because
+beta1 and beta2 share tau1, so solutions are compared as returned, without
+reordering. When tau1 and tau2 get close the betas become large and unstable.
+"""
+
+from __future__ import annotations
+
+import numpy as np
+from scipy.optimize import least_squares
+
+from .svensson import discount_factor, spot_rate
+
+# Coupon-equivalent par yields assume a semiannual schedule, which is the US
+# Treasury and Federal Reserve convention.
+COUPONS_PER_YEAR = 2
+
+# tau below this is economically meaningless and numerically explosive.
+TAU_FLOOR = 0.05
+TAU_CEILING = 60.0
+
+DEFAULT_STARTS = (
+    (0.5, 3.0),
+    (1.0, 8.0),
+    (2.0, 15.0),
+    (0.3, 20.0),
+    (5.0, 25.0),
+)
+
+
+def model_par_yields(taus, params) -> np.ndarray:
+    """Coupon-equivalent par yields implied by a Svensson curve, in percent.
+
+        c = 2 * (1 - DF(T)) / sum of DF at every semiannual coupon date
+
+    A semiannual schedule, not the continuous annuity the ECB uses. Applying the
+    wrong convention here would bias every fitted parameter.
+    """
+    grid = np.atleast_1d(np.asarray(taus, dtype=float))
+    counts = np.rint(grid * COUPONS_PER_YEAR).astype(int)
+    if np.any(np.abs(grid * COUPONS_PER_YEAR - counts) > 1e-9) or np.any(counts < 1):
+        raise ValueError("par yield tenors must sit on the semiannual grid")
+
+    # One vectorised discount call over the whole coupon grid, then index into the
+    # running annuity. Pricing each tenor separately makes the objective function
+    # thirty times more expensive, and a numerical jacobian calls it constantly.
+    times = np.arange(1, counts.max() + 1) / COUPONS_PER_YEAR
+    discounts = np.atleast_1d(discount_factor(times, *params))
+    annuities = np.cumsum(discounts)
+
+    index = counts - 1
+    return (
+        100.0 * COUPONS_PER_YEAR * (1.0 - discounts[index]) / annuities[index]
+    )
+
+
+def _residuals(free, taus, observed):
+    return model_par_yields(taus, tuple(free)) - observed
+
+
+def fit(taus, observed, starts=DEFAULT_STARTS, level_guess: float | None = None) -> dict:
+    """Least squares fit from several starting points, reporting the spread.
+
+    Returns the best solution plus how many distinct minima the starts reached. A
+    single start would hide that, and the point of the exercise is precisely that
+    the answer depends on where the optimiser begins.
+    """
+    taus = np.asarray(taus, dtype=float)
+    observed = np.asarray(observed, dtype=float)
+    finite = np.isfinite(observed)
+    taus, observed = taus[finite], observed[finite]
+    if len(taus) < 6:
+        raise ValueError("need at least six points to identify six parameters")
+
+    anchor = float(observed[-1]) if level_guess is None else level_guess
+    short = float(observed[0])
+
+    lower = [-30.0, -30.0, -60.0, -60.0, TAU_FLOOR, TAU_FLOOR]
+    upper = [30.0, 30.0, 60.0, 60.0, TAU_CEILING, TAU_CEILING]
+
+    solutions = []
+    for tau1, tau2 in starts:
+        guess = [anchor, short - anchor, 0.0, 0.0, tau1, tau2]
+        try:
+            result = least_squares(
+                _residuals,
+                guess,
+                args=(taus, observed),
+                bounds=(lower, upper),
+                # Loosening these hides the finding: stopping early makes every
+                # start land in the same rough place and the multiple minima
+                # disappear behind an unconverged fit.
+                xtol=1e-12,
+                ftol=1e-12,
+                max_nfev=5000,
+            )
+        except ValueError:
+            continue
+        if result.status <= 0:
+            continue
+        rmse = float(np.sqrt(np.mean(result.fun**2))) * 100.0  # basis points
+        solutions.append((rmse, tuple(float(v) for v in result.x)))
+
+    if not solutions:
+        raise RuntimeError("no start converged")
+
+    solutions.sort(key=lambda item: item[0])
+    best_rmse, best = solutions[0]
+
+    # Two solutions count as the same minimum when they fit equally well and sit
+    # in the same place. 0.01 bp and 1e-3 on the parameters are well inside the
+    # tolerance of the optimiser itself.
+    distinct = []
+    for rmse, candidate in solutions:
+        seen_before = any(
+            abs(rmse - other_rmse) < 0.01
+            and np.allclose(candidate, other, rtol=1e-3, atol=1e-3)
+            for other_rmse, other in distinct
+        )
+        if not seen_before:
+            distinct.append((rmse, candidate))
+
+    return {
+        "params": best,
+        "rmse_bp": best_rmse,
+        "starts": len(starts),
+        "converged": len(solutions),
+        "distinct_minima": len(distinct),
+        "worst_rmse_bp": float(solutions[-1][0]),
+        "tau_ratio": max(best[4], best[5]) / min(best[4], best[5]),
+    }
+
+
+def recovery_test(taus, true_params, starts=DEFAULT_STARTS) -> dict:
+    """Fit par yields generated by known parameters, and see if they come back.
+
+    This is the only version of the exercise with a ground truth. Fitting real
+    Treasury par yields and comparing to the Fed's parameters compares two
+    different estimation problems on two different inputs; fitting the Fed's own
+    generated curve does not.
+    """
+    truth = tuple(float(v) for v in true_params)
+    observed = model_par_yields(taus, truth)
+    result = fit(taus, observed, starts=starts)
+
+    grid = np.asarray(taus, dtype=float)
+    curve_error = float(
+        np.abs(spot_rate(grid, *result["params"]) - spot_rate(grid, *truth)).max() * 100.0
+    )
+
+    result.update(
+        {
+            "truth": truth,
+            "max_param_error": float(
+                np.abs(np.asarray(result["params"]) - np.asarray(truth)).max()
+            ),
+            "curve_error_bp": curve_error,
+            "true_tau_ratio": max(truth[4], truth[5]) / min(truth[4], truth[5]),
+        }
+    )
+    return result
