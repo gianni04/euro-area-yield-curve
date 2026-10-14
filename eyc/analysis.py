@@ -45,10 +45,9 @@ def curve_pca(
 ) -> dict:
     """Principal components of daily spot rate changes, with a holdout test.
 
-    Fitting on the whole sample and reporting 95 percent explained is the easy
-    version of this exercise. The loadings are therefore estimated on the first
-    part of the sample only and scored on the rest, because a factor structure
-    that does not survive out of sample is not a factor structure.
+    The loadings are estimated on the first part of the sample and scored on the
+    rest. Fitting on the whole sample would flatter the result, and a factor
+    structure that does not hold out of sample is of little use.
     """
     taus = list(loader.MATURITIES if maturities is None else maturities)
     rates = loader.load_rates("SR", curve=curve, maturities=taus, start=start, end=end)
@@ -101,8 +100,8 @@ def carry_rolldown(params, maturity: float, horizon: float = 0.25) -> dict:
     short rate, 1/DF(h) - 1. What is left is roll down: the bond has become
     shorter, and on an upward sloping curve a shorter bond is discounted less.
 
-    A trader looks at this before looking at any forecast, because it is what the
-    position pays for doing nothing.
+    This is what the position earns if nothing changes, so it is checked before
+    any forecast.
     """
     if horizon <= 0 or horizon >= maturity:
         raise ValueError("horizon must be positive and shorter than maturity")

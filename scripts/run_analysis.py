@@ -33,7 +33,7 @@ def main() -> int:
     latest = tuple(params_frame.iloc[-1][name] for name in loader.PARAMS)
     print(f"Curve date: {latest_date.date()}  (all euro area issuers)\n")
 
-    print("=== Sovereign credit premium, all issuers minus AAA (bp) ===\n")
+    print("Sovereign credit premium, all issuers minus AAA (bp)\n")
     spread = analysis.sovereign_spread()
     spread.to_csv(OUTPUT_DIR / "sovereign_spread.csv")
     ten_year = spread[10.0]
@@ -46,7 +46,7 @@ def main() -> int:
     print("\nannual average, 10Y:")
     print(ten_year.resample("YE").mean().round(1).to_string())
 
-    print("\n=== Curve factors, daily spot changes ===\n")
+    print("\nCurve factors, daily spot changes\n")
     pca = analysis.curve_pca()
     pca["loadings"].to_csv(OUTPUT_DIR / "pca_loadings.csv")
     shares = ", ".join(f"{s:.1%}" for s in pca["factor_shares"])
@@ -57,12 +57,12 @@ def main() -> int:
     print("\nloadings:")
     print(pca["loadings"].loc[REPORT_MATURITIES].round(3).to_string())
 
-    print("\n=== Bond risk on the latest curve ===\n")
+    print("\nBond risk on the latest curve\n")
     risk = pd.DataFrame([bonds.risk_report(b, latest) for b in PORTFOLIO])
     risk.to_csv(OUTPUT_DIR / "bond_risk.csv", index=False)
     print(risk.round(4).to_string(index=False))
 
-    print("\n=== Key rate durations: where the risk sits ===\n")
+    print("\nKey rate durations: where the risk sits\n")
     krd = pd.DataFrame(
         {bond.maturity: bonds.key_rate_durations(bond, latest) for bond in PORTFOLIO}
     ).T
@@ -84,7 +84,7 @@ def main() -> int:
         krd, OUTPUT_DIR / "figures" / "10_key_rate_durations.png"
     )
 
-    print("\n=== Carry and roll down, three month horizon, curve unchanged ===\n")
+    print("\nCarry and roll down, three month horizon, curve unchanged\n")
     roll = analysis.rolldown_table(latest)
     roll.to_csv(OUTPUT_DIR / "rolldown.csv")
     print(roll.round(2).to_string())

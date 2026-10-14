@@ -51,7 +51,7 @@ def main() -> int:
         f"{fed.index.min().date()} to {fed.index.max().date()}\n"
     )
 
-    print("=== 1. How often is the published fit degenerate? ===\n")
+    print("1. How often is the published fit degenerate?\n")
     print(
         f"tau2/tau1  median {ratio.median():.2f}, "
         f"10th percentile {ratio.quantile(0.10):.2f}"
@@ -67,12 +67,12 @@ def main() -> int:
     print("\nmost degenerate published fits:")
     print(fed.loc[worst, ["BETA2", "BETA3", "TAU1", "TAU2"]].round(2).to_string())
     print(
-        "\nThose betas are not a data error. They are two nearly collinear factors\n"
-        "cancelling each other, and the curve they produce is perfectly ordinary.\n"
-        "It is the same signature as the three anomalous ECB dates."
+        "\nThese betas come from two nearly collinear factors cancelling each other.\n"
+        "The curve they produce is ordinary, and the pattern matches the three\n"
+        "anomalous ECB dates."
     )
 
-    print("\n=== 2. Recovering known parameters from a generated curve ===\n")
+    print("\n2. Recovering known parameters from a generated curve\n")
     rng = np.random.default_rng(SEED)
     regimes = {
         "well identified": fed.index[ratio > WELL_IDENTIFIED],
@@ -115,13 +115,13 @@ def main() -> int:
         .to_string()
     )
     print(
-        "\nThe curve comes back. The parameters do not. Several starting points\n"
+        "\nThe curve comes back, the parameters do not. Several starting points\n"
         "reach parameter sets that differ by hundreds while reproducing the same\n"
         "curve to a thousandth of a basis point: the curve is identified, the\n"
         "parameterisation is not."
     )
 
-    print("\n=== 3. Fitting real Treasury par yields ===\n")
+    print("\n3. Fitting real Treasury par yields\n")
     treasury = us_data.treasury_par_yields(TREASURY_YEARS)
     fed_zero = us_data.gsw_curve(fed, "SVENY")
     common = treasury.index.intersection(fed_zero.index)
@@ -161,10 +161,9 @@ def main() -> int:
         f"gap to Fed curve: median {treasury_fit['max_gap_vs_gsw_bp'].median():.1f} bp"
     )
     print(
-        "\nThat gap is not an error. The Fed fits individual off-the-run bond\n"
-        "prices; the Treasury series is interpolated from on-the-run bid yields.\n"
-        "Two different inputs and two different estimation problems, so the curves\n"
-        "are close but were never going to coincide."
+        "\nThe gap is expected. The Fed fits individual off-the-run bond prices, while\n"
+        "the Treasury series is interpolated from on-the-run bid yields. The inputs\n"
+        "and the estimation problems differ, so the curves are close but not equal."
     )
     return 0
 

@@ -210,7 +210,7 @@ def plot_structure(
 
 
 def plot_equity(results: dict, path: Path) -> Path:
-    """Cumulative P&L with the drawdown underneath, never without it."""
+    """Cumulative P&L, with the drawdown plotted underneath."""
     fig, (top, bottom) = plt.subplots(
         2, 1, figsize=(8, 5), sharex=True, gridspec_kw={"height_ratios": [2, 1]}
     )

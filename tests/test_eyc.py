@@ -63,7 +63,7 @@ class TestPublishedReference:
         assert bp(annualised, PUBLISHED_2026["SR_10Y"]) > 5.0
 
     def test_legacy_and_current_par_yield_differ(self):
-        """The 2023 methodology change is real, not a rounding artefact."""
+        """The 2023 methodology change moves the par yield by more than rounding."""
         current = par_yield(10.0, *PARAMS_2026, method="integral")
         legacy = par_yield(10.0, *PARAMS_2026, method="monthly")
         assert bp(current, legacy) > 0.4
@@ -167,7 +167,7 @@ class TestBondPricing:
         assert long > short
 
     def test_duration_families_disagree_on_a_sloped_curve(self):
-        """Modified and effective duration are different measures, not synonyms."""
+        """Modified and effective duration are different measures."""
         report = bonds.risk_report(bonds.Bond(10.0, 3.0), PARAMS_2026)
         assert abs(report["duration_gap"]) > 0.1
 
@@ -206,7 +206,7 @@ class TestStrategies:
         return matrix / np.linalg.norm(matrix, axis=0)
 
     def test_neutral_weights_kill_level_and_slope(self):
-        """The whole point of the structure: no level or slope exposure left."""
+        """The structure should leave no level or slope exposure."""
         loadings = self._loadings()
         weights = strategies.neutral_weights(loadings, [1, 2, 3])
         exposure = weights @ loadings[[1, 2, 3], :2]
@@ -338,7 +338,7 @@ class TestKeyRateDurations:
         assert buckets.drop(10.0).abs().max() < 1e-9
 
     def test_long_bond_is_not_hedged_by_the_ten_year(self):
-        """The point of the exercise: a 10Y hedge misses most of a 30Y bond."""
+        """A 10Y hedge misses most of a 30Y bond's key rate risk."""
         buckets = bonds.key_rate_durations(bonds.Bond(30.0, 2.0), PARAMS_2026)
         assert buckets[10.0] / buckets.sum() < 0.25
 

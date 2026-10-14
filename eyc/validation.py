@@ -24,7 +24,7 @@ KINDS = {"SR": spot_rate, "IF": instantaneous_forward, "PY": par_yield}
 # Rates are published in percent, so one basis point is 0.01.
 BP = 100.0
 
-# A correct reconstruction lands far inside this; it exists to make failure loud.
+# A correct reconstruction lands far inside this. It is there to flag failures.
 TOLERANCE_BP = 0.01
 
 
@@ -114,10 +114,10 @@ def validate(
 def check_invariants(params: pd.DataFrame, maturities=None) -> dict:
     """Internal consistency checks that need no external reference.
 
-    Note on what is *not* checked: a discount factor above one, or a discount
-    curve that rises with maturity, is not a defect here. Both follow from
-    negative rates, which the euro area actually printed from 2015 to 2022. The
-    genuine invariant is positivity, plus the model's own spot/forward identity.
+    A discount factor above one, or a discount curve that rises with maturity, is
+    not flagged. Both follow from negative rates, which the euro area printed from
+    2015 to 2022. The invariants checked are positivity and the model's own
+    spot/forward identity.
     """
     from scipy.integrate import quad
 

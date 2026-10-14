@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parent.parent
 OUTPUT_DIR = ROOT / "output"
 FIGURE_DIR = OUTPUT_DIR / "figures"
 
-# Benchmark tenors, the points a rates desk actually quotes.
+# Benchmark tenors, the points a rates desk quotes.
 TENORS = [0.25, 0.5, 1.0, 2.0, 3.0, 5.0, 7.0, 10.0, 15.0, 20.0, 30.0]
 
 CANDIDATES = [
@@ -56,7 +56,7 @@ def main() -> int:
     rates = loader.load_rates("SR", "ALL", maturities=TENORS)
     print(f"{len(rates)} curves, {rates.index[0].date()} to {rates.index[-1].date()}\n")
 
-    print("=== Structure screen ===\n")
+    print("Structure screen\n")
     built, screen = {}, []
     for legs in CANDIDATES:
         fly = strategies.build_fly(rates, legs)
@@ -90,7 +90,7 @@ def main() -> int:
         "their hedge ratios are solver noise, not curve shape."
     )
 
-    print("\n=== Backtest, net of costs ===\n")
+    print("\nBacktest, net of costs\n")
     results, rows = {}, []
     for legs, fly in built.items():
         weights = fly[["w_wing1", "w_belly", "w_wing2"]]
@@ -115,10 +115,10 @@ def main() -> int:
             if name.startswith("bands"):
                 results[key] = frame
 
-    # Every structure that passed the screen, equally weighted. No name is
-    # excluded: dropping the two that happened to perform worst, and calling the
-    # survivors "the well conditioned ones", would be selection after the fact.
-    # It is also false here: 2s10s30s has the best condition number of the five.
+    # Every structure that passed the screen, equally weighted. Dropping the two
+    # that did worst and calling the rest "the well conditioned ones" would be
+    # selection after the fact. The label is wrong anyway: 2s10s30s has the best
+    # condition number of the five.
     def combine(keys, label):
         weight = 1.0 / len(keys)
         frame = pd.DataFrame(
@@ -138,9 +138,9 @@ def main() -> int:
     everything = list(results)
     results["portfolio, all 5"] = combine(everything, "portfolio, all 5")
 
-    # Reported second and labelled for what it is: the same portfolio with the
-    # worst conditioned structure removed. The threshold was chosen after seeing
-    # the results, so this line is a diagnostic, not a result.
+    # Reported second, as a diagnostic: the same portfolio with the worst
+    # conditioned structure removed. The threshold was chosen after seeing the
+    # results, so this is not a result.
     survivors = [k for k in everything if not k.startswith("1s3s7s")]
     results["portfolio, ex-post drop"] = combine(
         survivors, "portfolio, ex-post drop (in-sample)"
@@ -156,7 +156,7 @@ def main() -> int:
     print("\ncorrelation of daily P&L between structures:")
     print(correlation.round(2).to_string())
 
-    print("\n=== Carry: roll down of each structure, three month horizon ===\n")
+    print("\nCarry: roll down of each structure, three month horizon\n")
     params_all = loader.load_parameters("ALL")
     carry_rows = []
     for legs, fly in built.items():
@@ -202,11 +202,11 @@ def main() -> int:
         "so it is reported and left off rather than switched on."
     )
 
-    print("\n=== Duration hedge residual ===\n")
+    print("\nDuration hedge residual\n")
     residual = strategies.hedge_residual(rates, HEDGE_TENOR)
     print(residual.round(3).to_string())
 
-    print("\n=== Figures ===\n")
+    print("\nFigures\n")
     pca = analysis.curve_pca(maturities=TENORS)
     params = loader.load_parameters("ALL")
     latest = tuple(params.iloc[-1][name] for name in loader.PARAMS)

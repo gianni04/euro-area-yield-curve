@@ -133,8 +133,7 @@ def effective_convexity(bond: Bond, params) -> float:
     return (up + down - 2.0 * base) / (base * (SHIFT_BP / 10000.0) ** 2)
 
 
-# Tenors a rates desk buckets its risk into. A book is hedged bucket by bucket,
-# not with a single parallel number.
+# Tenors a rates desk buckets its risk into. Books are hedged bucket by bucket.
 KEY_TENORS = (0.5, 2.0, 5.0, 10.0, 30.0)
 
 
@@ -145,7 +144,7 @@ def _tent_weights(times: np.ndarray, keys: tuple) -> np.ndarray:
     neighbouring keys, flat beyond the ends. Built by interpolating unit vectors,
     which guarantees the rows sum to one at every maturity: the sum of all key
     rate shocks is then exactly a parallel shift, and the sum of the key rate
-    durations is exactly the effective duration. That identity is the test.
+    durations is exactly the effective duration. The tests check this identity.
     """
     grid = np.asarray(keys, dtype=float)
     rows = []

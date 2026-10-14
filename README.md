@@ -14,8 +14,9 @@ backtest. Python, ECB data 2004-2026.
 - **ECB methodology change on 19 May 2023.** The par yield formula changed on
   that date and past data was not recalculated: 4,782 dates match the old
   formula, 832 match the new one, none match both.
-- **PCA of daily curve moves:** level, slope and curvature explain 98.6% of the
-  variance out of sample (74.5%, 15.3%, 6.2%).
+- **PCA of daily curve moves:** three factors explain 98.6% of the variance out
+  of sample. The first (level) explains 74.5%, the second (slope) 15.3% and the
+  third (curvature) 6.2%.
 - **Relative value:** PCA-neutral butterflies backtested 2005-2026 after costs.
   Portfolio Sharpe 0.16, t = 0.75, so not statistically significant.
 

@@ -21,7 +21,7 @@ BP = 100.0
 
 # Round trip cost per unit of DV01 traded, in basis points of yield. Liquid euro
 # curve points trade inside a basis point; half a basis point round trip is
-# deliberately conservative for a study of this kind.
+# conservative for a study like this.
 DEFAULT_COST_BP = 0.5
 
 TRADING_DAYS = 256
@@ -52,9 +52,9 @@ def neutral_weights(loadings: np.ndarray, legs: list[int], normalise: int = 1):
     """Weights on three curve points orthogonal to the first two factors.
 
     With three legs and two neutrality constraints the solution is unique up to
-    scale, so it is pinned by fixing the belly weight. The result is a genuine
-    curvature trade: it makes nothing from a parallel move or a pure steepening,
-    only from the belly moving against a factor-weighted blend of the wings.
+    scale, so it is pinned by fixing the belly weight. The result is a curvature
+    trade: it earns nothing from a parallel move or a pure steepening, only from
+    the belly moving against a factor-weighted blend of the wings.
     """
     if len(legs) != 3:
         raise ValueError("a butterfly needs exactly three legs")
@@ -77,7 +77,7 @@ def conditioning(loadings: np.ndarray, legs: list[int]) -> float:
     nearly undetermined: hedge ratios blow up, the structure carries enormous
     gross risk for a tiny net view, and the trade is an artefact of the solver
     rather than a position. A 1s3s7s butterfly on this curve reaches weights of
-    fourteen against one. Screen on this before trading, not after.
+    fourteen against one. Screen on this before trading.
     """
     singular = np.linalg.svd(loadings[legs, :2].T, compute_uv=False)
     return float(singular[0] / singular[-1]) if singular[-1] > 0 else float("inf")
@@ -98,14 +98,13 @@ def build_fly(
     """Factor-neutral butterfly level through time, in basis points.
 
     Hedge ratios are re-solved every reset_every days and held constant in
-    between, which is how a desk actually runs a book. Re-solving daily injects a
-    jump into the level every time the weights move, and that jump is not a
-    market move: it makes the series look like noise and destroys any estimate of
-    mean reversion taken from it.
+    between, as a desk would run the book. Re-solving daily injects a jump into
+    the level every time the weights move, and that jump is not a market move: it
+    makes the series look like noise and destroys any estimate of mean reversion
+    taken from it.
 
-    The naive 2:-1:-1 version is returned alongside, so the difference between a
-    structure that is actually neutral and one that only looks neutral is visible
-    rather than asserted.
+    The naive 2:-1:-1 version is returned alongside, so a structure that only
+    looks neutral can be told apart from one that is neutral.
     """
     columns = list(rates.columns)
     indices = [columns.index(leg) for leg in legs]
@@ -120,11 +119,10 @@ def build_fly(
     for count, (date, matrix) in enumerate(loadings.items()):
         if weights is None or count % reset_every == 0:
             candidate = neutral_weights(matrix, indices)
-            # A desk does not put on a hedge ratio of fourteen because the
-            # solver said so. When the constraint degenerates, the previous
-            # ratios stay in the book until the next reset. Without this, one
-            # bad reset in 2011 produces an 840 bp single day move on the
-            # 3s7s15s and dominates twenty years of P&L.
+            # When the constraint degenerates, the previous ratios stay in the
+            # book until the next reset. Without this, one bad reset in 2011
+            # produces an 840 bp single day move on the 3s7s15s and dominates
+            # twenty years of P&L.
             if np.abs(candidate).sum() <= MAX_GROSS_DV01 or weights is None:
                 weights = candidate
                 condition = conditioning(matrix, indices)
@@ -234,9 +232,8 @@ def reversion_fraction(half_life_days: float, horizon_days: float) -> float:
     """Share of a deviation that a mean reverting series gives back over a horizon.
 
     An exponential process closes 1 - 2^(-h/HL) of its gap. With a half life of
-    78 days and a three month horizon that is 43 percent, not 100. Comparing a
-    full deviation against a full horizon of carry is not comparing like with
-    like, and it is how a carry adjustment ends up dominated by the carry term.
+    78 days and a three month horizon that is 43 percent, not 100. Using a full
+    deviation against a full horizon of carry overweights the carry term.
     """
     if half_life_days <= 0:
         return 1.0
@@ -262,9 +259,9 @@ def carry_filter(
 
     because a long profits from the deviation closing and pays away the drift the
     structure earns by ageing. Trades with a negative expectation are declined.
-    Framed as a filter rather than as a rescaled signal so the entry and exit
-    thresholds stay exactly where they were: retuning them alongside a new term
-    would make the comparison meaningless.
+    Written as a filter, not a rescaled signal, so the entry and exit thresholds
+    stay where they were. Retuning them alongside a new term would make the
+    comparison meaningless.
     """
     index = position.index
     expected = position * (
@@ -406,7 +403,7 @@ def performance(result: pd.DataFrame, label: str = "") -> dict:
         "days": int(len(net)),
         # Sharpe times the square root of the sample length in years. Below about
         # two the strategy is not statistically distinguishable from zero, and a
-        # Sharpe quoted without it is only half an answer.
+        # Sharpe quoted without this number says little.
         "t_stat": sharpe * np.sqrt(years),
         "days_in_market": int((result["position"] != 0).sum()),
         "total_bp": float(net.sum()),

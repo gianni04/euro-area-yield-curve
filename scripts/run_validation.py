@@ -72,7 +72,7 @@ def main() -> int:
 
     table = pd.DataFrame(summaries).set_index("series")
     pd.set_option("display.width", 200)
-    print("\n=== Reconstruction vs published ECB rates (errors in bp) ===\n")
+    print("\nReconstruction vs published ECB rates (errors in bp)\n")
     print(
         table[COLUMNS].to_string(
             formatters={
@@ -84,7 +84,7 @@ def main() -> int:
     )
     table.to_csv(OUTPUT_DIR / "validation_summary.csv")
 
-    print("\n=== Internal invariants ===\n")
+    print("\nInternal invariants\n")
     for curve in ("AAA", "ALL"):
         checks = validation.check_invariants(loader.load_parameters(curve=curve))
         print(f"{curve}: {checks}")

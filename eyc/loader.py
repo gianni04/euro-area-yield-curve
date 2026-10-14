@@ -67,9 +67,9 @@ def rate_codes(kind: str, maturities=None) -> list[str]:
 def _fetch_raw(series_key: str, start: str, end: str | None, attempts: int = 4) -> str:
     """One SDMX request, retried on transport failure with linear backoff.
 
-    The portal drops connections intermittently. Without retries a single flaky
-    request kills a run that has already spent minutes downloading, which is a
-    poor trade for the few seconds a retry costs.
+    The portal drops connections now and then. Without retries, one flaky request
+    can kill a run that has already spent minutes downloading. A retry costs a
+    few seconds.
     """
     url = f"{BASE_URL}/{series_key}?format=csvdata&startPeriod={start}"
     if end:
