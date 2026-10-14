@@ -4,6 +4,8 @@ Rebuilding the ECB's euro area yield curves, checking them against the
 published rates, and using the curve for bond risk, PCA and a relative value
 backtest. Python, ECB data 2004-2026.
 
+A short note with the method and results: [note/euro-area-yield-curve.pdf](note/euro-area-yield-curve.pdf).
+
 ![Euro area zero coupon curve](output/figures/01_curve_history.png)
 
 ## Summary
