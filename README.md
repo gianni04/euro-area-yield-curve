@@ -17,8 +17,8 @@ A short note with the method and results: [note/euro-area-yield-curve.pdf](note/
   that date and past data was not recalculated: 4,782 dates match the old
   formula, 832 match the new one, none match both.
 - **PCA of daily curve moves:** three factors explain 98.6% of the variance out
-  of sample. The first (level) explains 74.5%, the second (slope) 15.3% and the
-  third (curvature) 6.2%.
+  of sample. On the first half of the sample, over all 120 maturities, level
+  explains 74.5%, slope 15.3% and curvature 6.2% (96.0% together).
 - **Relative value:** PCA-neutral butterflies backtested 2005-2026 after costs.
   Portfolio Sharpe 0.16, t = 0.75, so not statistically significant.
 
@@ -34,7 +34,8 @@ python -m pytest tests/ -q           # 52 tests, no network needed
 ```
 
 Data is downloaded from the ECB Data Portal (`data-api.ecb.europa.eu`, free,
-no API key) and cached in `data/`.
+no API key) and cached in `data/`. The numbers here use data up to 21 August
+2026 (5,614 dates). A later download will move some of them slightly.
 
 ## 1. Rebuilding the curve
 
@@ -78,7 +79,9 @@ unstable. The all-issuers curve is exact on those same dates.
 
 **PCA** on daily spot changes, loadings fitted on the first half of the sample
 and tested on the second half: three factors explain 96.0% in sample and 98.6%
-out of sample.
+out of sample, over all 120 maturities. The figure uses the 11 tenors of the
+trading study instead, so its shares are lower: 59.1%, 19.2% and 9.7% (88.0%
+together) on the same first-half fit.
 
 ![Factors](output/figures/03_factors.png)
 
