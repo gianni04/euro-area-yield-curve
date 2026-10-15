@@ -10,7 +10,7 @@ A short note with the method and results: [note/euro-area-yield-curve.pdf](note/
 
 ## Summary
 
-- **Curve rebuilt from the ECB's Svensson parameters** and compared with the
+- **Curve rebuilt from the ECB's Svensson parameters** (Svensson, 1994) and compared with the
   rates the ECB publishes: max error 1.5e-08 bp over 673,680 observations
   (all-issuers curve, 5,614 dates x 120 maturities).
 - **Change in the published par yields on 19 May 2023, found in the data.**
@@ -125,7 +125,7 @@ turnover from ~11x to ~70x a year and makes the 2s5s10s negative.
 
 The ECB does not publish the bond prices behind its curve, so the fitting part
 is done on US data, where the Fed publishes its own Svensson parameters
-(Gurkaynak-Sack-Wright) to compare against.
+(Gurkaynak, Sack and Wright, 2007) to compare against.
 
 - When tau1 and tau2 are far apart, the optimiser recovers the Fed's parameters
   exactly. When they are close (13.5% of days), different starting points give
@@ -162,3 +162,9 @@ tests/              52 tests
 
 Source: ECB Data Portal, dataset `YC`, and the ECB
 [yield curve technical notes](https://www.ecb.europa.eu/stats/financial_markets_and_interest_rates/euro_area_yield_curves/shared/pdf/technical_notes.pdf).
+
+## References
+
+Gurkaynak, R. S., Sack, B. and Wright, J. H. (2007). The U.S. Treasury yield curve: 1961 to the present. Journal of Monetary Economics, 54(8), 2291-2304. https://doi.org/10.1016/j.jmoneco.2007.06.029
+
+Svensson, L. E. O. (1994). Estimating and interpreting forward interest rates: Sweden 1992-1994. NBER Working Paper 4871. https://doi.org/10.3386/w4871
