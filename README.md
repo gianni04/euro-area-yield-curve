@@ -13,9 +13,11 @@ A short note with the method and results: [note/euro-area-yield-curve.pdf](note/
 - **Curve rebuilt from the ECB's Svensson parameters** and compared with the
   rates the ECB publishes: max error 1.5e-08 bp over 673,680 observations
   (all-issuers curve, 5,614 dates x 120 maturities).
-- **ECB methodology change on 19 May 2023.** The par yield formula changed on
-  that date and past data was not recalculated: 4,782 dates match the old
-  formula, 832 match the new one, none match both.
+- **Change in the published par yields on 19 May 2023, found in the data.**
+  This is my own empirical finding; the ECB technical notes do not mention it.
+  The par yield formula changes on that date and past data was not
+  recalculated: 4,782 dates match the old formula, 832 match the new one, none
+  match both.
 - **PCA of daily curve moves:** three factors explain 98.6% of the variance out
   of sample. On the first half of the sample, over all 120 maturities, level
   explains 74.5%, slope 15.3% and curvature 6.2% (96.0% together).
@@ -60,7 +62,8 @@ Things I had to get right to reach zero error:
 - **Par yield definition.** The ECB divides by the integral of the discount
   function (continuous annuity), not by an annual coupon schedule. Using a
   coupon schedule is off by 6.8 bp at 10 years.
-- **The May 2023 change.** Before 19 May 2023 the annuity is a monthly sum of
+- **The May 2023 change (my own finding from the data, not in the ECB notes).**
+  Before 19 May 2023 the annuity is a monthly sum of
   discount factors, from that date it is the exact integral. The split is
   clean (4,782 / 832 / 0 dates) and the gap reaches 1.28 bp in November 2011.
   Both versions are implemented and chosen by date.
